@@ -1,0 +1,142 @@
+---
+title: "Statistical inference with the GSS data"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+library(statsr)
+```
+
+### Load data
+ 
+
+```{r load-data}
+load("gss.Rdata")
+```
+
+
+
+* * *
+
+## Part 1: Data
+
+The data used in this project is taken from GSS that is General Social Survey which gathers information  on contemporary American Society to monitor and explain trends and constants in attitudes, behaviors, and attributes.
+GSS is a socialogical survey that has been collecting the data since 1972 by the National Opinion Research Center.
+We can only infer any correlation and not causation as no random assignment was used (source: WikiPedia)
+
+Ransom Samples are taken for this Analysis.The Variables used in this analysis are Number of Children (child) and Family income when they were 16 (incom16)
+Then income variable is a catagorical variable and as 6 categories namely "Far Below Average", "Below Average", "Average", "Above Average", "Far Above Average", "Lived in Institution", "Not Apllicable".  Child is a variable with values 0 to 8.
+* * *
+
+## Part 2: Research question
+
+This analysis aims to determine any relation between the family income at the age of 16 and the number of children.
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+Exploring The Family Income at the age of 16 Variable.
+
+```{r}
+table(gss$incom16)
+
+```
+
+```{r}
+round(prop.table(table(gss$incom16)), digits = 2)
+```
+
+
+Exploring the number of children variable.
+
+```{r}
+
+
+
+table(gss$child)
+
+```
+```{r}
+
+
+summary(gss$child)
+
+```
+
+
+Joining the Two Tables to see the data of number of children for each category of house income at the age of 16
+
+```{r}
+table(gss$child, gss$incom16)
+```
+
+
+
+```{r}
+boxplot(gss$child ~ gss$incom16, main = "Number of Children by Income groups")
+```
+As we see from the above the box plot that Median number of children for each category of income is 2, where as the category with the Above Average income as a median of 1 child.
+
+We can also see that as the income increases most of population as zero child wheras the low income group have at least one child.
+
+```{r}
+ggplot(data=gss,aes(x=gss$child, y=gss$incom16,fill=gss$incom16))+geom_bar(stat="identity") 
+```
+
+
+Created a bar chart to see the income groups for each category of number of childand we see that Average and above average are more prominent for any house with any number of children.
+
+
+* * *
+
+## Part 4: Inference
+
+
+
+  H0 -  number of children are not independent on income
+  H1 -  number of children is somehow related to the income
+  
+```{r}
+ chisq.test(gss$child, gss$incom16)
+```
+  
+  From the above Chi-Sqaured test to infer our hypothesis is correct, we see that the p-value is close to zero and we can reject our null hypothesis. But, we need to check if there is enough variance in our dataset to finalize our conclusion.
+  
+```{r}
+sapply(split(gss$child, gss$incom16), sd, na.rm = TRUE)
+```
+When we traverse the data to check the Standard deviation of each category using SApply, we see that amost all the category has Standard Deviation somewhat close to each other, Hence the Variance of the data for Each category of family income at the age of 6 is almost the same, proving that the above chi test is correct and we can reject the null Hypthesis, but, before that we can perform thr ANOVA to find out the variance to confirm our Hypothesis.
+
+```{r}
+anova(lm(gss$child ~ gss$incom16))
+```
+
+  
+As we see that the P value is < 2.2e-16 which is convinvincing enough the data and its means has variance.
+
+```{r}
+TukeyHSD(aov(gss$child ~ gss$incom16), conf.level = 0.95)
+```
+The Mean of Far Below Average is is significantly bigger than all other categories.
+The MEan of of Below Average is bigger than other three categories but not greater than the categories with p-value greater than 0.05.
+while other categoreis have p value greater than 0.05.
+
+
+Based on the Conclusion from The EDA we can say that
+
+- Number of children are not independent of the house income at the age of 16.
+- The population mean for number of children is 2 for most cases
+- House income having Above Average have number of child one.
+- Most of the houses have average income for any number of child.
+we can generalise this for the US Population.
